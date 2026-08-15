@@ -1,3 +1,6 @@
+# Internal maintainer docs (do not publish)
+*.internal.md
+
 # .gitignore for Python SDK
 
 # Byte-compiled / optimized / DLL files

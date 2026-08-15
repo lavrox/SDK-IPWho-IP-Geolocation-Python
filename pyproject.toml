@@ -1,11 +1,11 @@
 [build-system]
-requires = ["setuptools>=45", "wheel"]
+requires = ["setuptools>=61", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "ipwho-ip-geolocation-api"
-version = "1.0.2"
-description = "The official Python SDK for the IPWho IP Geolocation API - Get detailed IP geolocation, timezone, connection, and security information with full type safety."
+version = "2.0.0"
+description = "Official Python SDK for the IPWho IP geolocation API (lookup, me, bulk) — geoip, IP location, ASN/ISP, timezone, VPN detection."
 readme = "README.md"
 requires-python = ">=3.8"
 license = "MIT"
@@ -15,18 +15,30 @@ authors = [
 ]
 keywords = [
     "ipwho",
+    "ipwho.org",
+    "lavrox",
+    "geoip",
+    "geoip lookup",
+    "geoip api",
+    "ip location",
+    "ip location api",
+    "ip lookup",
     "ip-geolocation",
-    "location",
-    "timezone",
-    "security",
-    "vpn-detection",
-    "tor-detection",
-    "isp",
-    "asn",
+    "ip geolocation",
+    "ip-geolocation-api",
     "geolocation-api",
     "ip-api",
+    "ipv4",
+    "ipv6",
+    "asn",
+    "isp",
+    "vpn-detection",
+    "tor-detection",
+    "proxy-detection",
+    "timezone",
     "python",
-    "sdk"
+    "sdk",
+    "bulk ip lookup",
 ]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -47,22 +59,19 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "pytest>=7.0.0",
-    "pytest-cov>=4.0.0",
-    "pytest-asyncio>=0.21.0",
 ]
 
 [project.urls]
-Homepage = "https://github.com/lavrox/SDK-IPWho-Python"
+Homepage = "https://www.ipwho.org"
+Documentation = "https://www.ipwho.org/docs"
 Repository = "https://github.com/lavrox/SDK-IPWho-Python.git"
-Documentation = "https://github.com/lavrox/SDK-IPWho-Python"
 "Bug Tracker" = "https://github.com/lavrox/SDK-IPWho-Python/issues"
 
-[tool.setuptools]
-packages = ["src"]
+[tool.setuptools.packages.find]
+include = ["ipwho*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = "test_*.py"
 python_classes = "Test*"
 python_functions = "test_*"
-asyncio_mode = "auto"

@@ -1,18 +1,1 @@
-# Python SDK Requirements
-
-## Installation
-
-```bash
-pip install -r requirements.txt
-pip install -r requirements-dev.txt  # For development and testing
-```
-
-## Core Dependencies
-
-- requests>=2.28.0 - HTTP client for API calls
-
-## Development Dependencies
-
-- pytest>=7.0.0 - Testing framework
-- pytest-cov>=4.0.0 - Code coverage
-- pytest-asyncio>=0.21.0 - Async test support
+requests>=2.28.0
