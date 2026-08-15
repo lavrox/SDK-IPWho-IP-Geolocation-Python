@@ -1,6 +1,6 @@
 # IPWho ([ipwho.org](https://www.ipwho.org)) Python SDK
 
-[![PyPI version](https://img.shields.io/pypi/v/ipwho-ip-geolocation-api?style=flat-square)](https://pypi.org/project/ipwho-ip-geolocation-api/) [![Python version](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/) [![license](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/lavrox/SDK-IPWho-Python/blob/main/LICENSE)
+[![PyPI version](https://img.shields.io/pypi/v/ipwho-ip-geolocation-api?style=flat-square)](https://pypi.org/project/ipwho-ip-geolocation-api/) [![Python version](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/) [![license](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/lavrox/SDK-IPWho-IP-Geolocation-Python/blob/main/LICENSE)
 
 Official Python SDK for the [IPWho](https://www.ipwho.org) **IP geolocation API** — geoip lookup, IP location, IP to country / latitude / longitude, ASN/ISP, timezone, currency, flag, and proxy/VPN detection with typed responses. Works as an IP lookup / ip-geolocation client for IPv4 and IPv6 (`lookup`, `me`, `bulk`).
 
@@ -22,8 +22,8 @@ pip install ipwho-ip-geolocation-api
 From source:
 
 ```bash
-git clone https://github.com/lavrox/SDK-IPWho-Python.git
-cd SDK-IPWho-Python
+git clone https://github.com/lavrox/SDK-IPWho-IP-Geolocation-Python.git
+cd SDK-IPWho-IP-Geolocation-Python
 pip install -e .
 ```
 
@@ -344,7 +344,7 @@ MIT License — see [LICENSE](LICENSE).
 
 - Documentation: [ipwho.org/docs](https://www.ipwho.org/docs)
 - Contact: [ipwho.org/contact](https://www.ipwho.org/contact)
-- GitHub Issues: [lavrox/SDK-IPWho-Python](https://github.com/lavrox/SDK-IPWho-Python/issues)
+- GitHub Issues: [lavrox/SDK-IPWho-IP-Geolocation-Python](https://github.com/lavrox/SDK-IPWho-IP-Geolocation-Python/issues)
 - Website: [ipwho.org](https://www.ipwho.org)
 
 ---

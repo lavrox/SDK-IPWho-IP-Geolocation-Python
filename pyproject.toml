@@ -64,8 +64,8 @@ dev = [
 [project.urls]
 Homepage = "https://www.ipwho.org"
 Documentation = "https://www.ipwho.org/docs"
-Repository = "https://github.com/lavrox/SDK-IPWho-Python.git"
-"Bug Tracker" = "https://github.com/lavrox/SDK-IPWho-Python/issues"
+Repository = "https://github.com/lavrox/SDK-IPWho-IP-Geolocation-Python.git"
+"Bug Tracker" = "https://github.com/lavrox/SDK-IPWho-IP-Geolocation-Python/issues"
 
 [tool.setuptools.packages.find]
 include = ["ipwho*"]
