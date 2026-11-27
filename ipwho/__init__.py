@@ -269,6 +269,12 @@ class UserAgent:
         )
 
 
+def _block(model: Any, d: Dict[str, Any], key: str) -> Any:
+    """Parse one nested object, or ``None`` if it is missing or ``null``."""
+    value = d.get(key)
+    return model.from_dict(value) if isinstance(value, dict) else None
+
+
 @dataclass
 class GeoData:
     """The ``data`` payload inside a successful IpGeoResponse."""
@@ -287,15 +293,15 @@ class GeoData:
     def from_dict(cls, d: Dict[str, Any]) -> "GeoData":
         return cls(
             ip=d.get("ip", ""),
-            geo_location=GeoLocation.from_dict(d["geoLocation"]) if "geoLocation" in d else None,
-            timezone=Timezone.from_dict(d["timezone"]) if "timezone" in d else None,
-            flag=Flag.from_dict(d["flag"]) if "flag" in d else None,
-            currency=Currency.from_dict(d["currency"]) if "currency" in d else None,
-            connection=Connection.from_dict(d["connection"]) if "connection" in d else None,
-            security=Security.from_dict(d["security"]) if "security" in d else None,
-            user_agent=UserAgent.from_dict(d["userAgent"]) if "userAgent" in d else None,
+            geo_location=_block(GeoLocation, d, "geoLocation"),
+            timezone=_block(Timezone, d, "timezone"),
+            flag=_block(Flag, d, "flag"),
+            currency=_block(Currency, d, "currency"),
+            connection=_block(Connection, d, "connection"),
+            security=_block(Security, d, "security"),
+            user_agent=_block(UserAgent, d, "userAgent"),
             response_array=(
-                [IpGeoResponse.from_dict(item) for item in d["responseArray"]]
+                [IpGeoResponse._from_bulk_row(row) for row in d["responseArray"]]
                 if isinstance(d.get("responseArray"), list)
                 else None
             ),
@@ -330,6 +336,17 @@ class IpGeoResponse:
             message=d.get("message"),
         )
 
+    @classmethod
+    def _from_bulk_row(cls, row: Dict[str, Any]) -> "IpGeoResponse":
+        """Build one bulk result. The API sends bulk rows flat:
+        ``{success, ip, geoLocation, ...}`` or ``{success: false, ip, message}``.
+        """
+        return cls(
+            success=row.get("success", False),
+            data=GeoData.from_dict(row),
+            message=row.get("message"),
+        )
+
 
 # ═══════════════════════════════════════════════════════════════════════
 # Client
@@ -361,10 +378,12 @@ class IPWhoClient:
     ) -> None:
         if not api_key:
             raise ValueError("api_key is required")
-        self._api_key = api_key
         self._base_url = (base_url or self.DEFAULT_BASE_URL).rstrip("/")
         self._timeout = timeout
         self._session = requests.Session()
+        # Set as ``auth`` rather than a plain header, so that a ~/.netrc entry
+        # can't replace the Authorization header.
+        self._session.auth = _BearerAuth(api_key)
         self._session.headers.update(
             {
                 "Accept": "application/json",
@@ -393,7 +412,7 @@ class IPWhoClient:
         Returns:
             IpGeoResponse
         """
-        params = _build_params(self._api_key, format, fields)
+        params = _build_params(format, fields)
         return self._get(f"/ip/{ip}", params, format)
 
     def me(
@@ -410,7 +429,7 @@ class IPWhoClient:
         Returns:
             IpGeoResponse
         """
-        params = _build_params(self._api_key, format, fields)
+        params = _build_params(format, fields)
         return self._get("/me", params, format)
 
     def bulk(self, ips: List[str]) -> IpGeoResponse:
@@ -420,14 +439,14 @@ class IPWhoClient:
             ips: List of IPv4 or IPv6 addresses.
 
         Returns:
-            IpGeoResponse whose ``data`` contains a ``responseArray``
-            list of per-IP ``GeoData`` objects.
+            IpGeoResponse whose ``data.response_array`` holds one
+            ``IpGeoResponse`` per address. Check each row's ``success``. A
+            failed row has a ``message``, and its ``data`` holds only the ``ip``.
         """
         if not ips:
             raise ValueError("ips must not be empty")
         bulk_param = ",".join(ips)
-        params = {"apiKey": self._api_key}
-        return self._get(f"/bulk/{bulk_param}", params, "json")
+        return self._get(f"/bulk/{bulk_param}", {}, "json")
 
     # ── internal ────────────────────────────────────────────────────
 
@@ -487,10 +506,19 @@ class IPWhoClient:
 # ═══════════════════════════════════════════════════════════════════════
 
 
-def _build_params(
-    api_key: str, format: str, fields: Optional[str]
-) -> Dict[str, str]:
-    params: Dict[str, str] = {"apiKey": api_key}
+class _BearerAuth(requests.auth.AuthBase):
+    """Send the API key in the Authorization header, not in the URL."""
+
+    def __init__(self, api_key: str) -> None:
+        self._api_key = api_key
+
+    def __call__(self, request: requests.PreparedRequest) -> requests.PreparedRequest:
+        request.headers["Authorization"] = f"Bearer {self._api_key}"
+        return request
+
+
+def _build_params(format: str, fields: Optional[str]) -> Dict[str, str]:
+    params: Dict[str, str] = {}
     if format != "json":
         params["format"] = format
     if fields:

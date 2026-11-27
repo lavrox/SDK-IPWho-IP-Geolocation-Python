@@ -60,6 +60,8 @@ IpGeoResponse
     └── response_array: list     # bulk only
 ```
 
+The client sends your API key in the `Authorization` header, so it isn't part of the request URL.
+
 ## Reading the full response (8.8.8.8)
 
 Values below match the live [IPWho](https://www.ipwho.org) API (Google DNS: United States, ASN 15169, timezone America/Chicago, dial code +1). Nested objects can be `None` for some IPs — always check.
@@ -95,9 +97,9 @@ print(flag.flag_icon)        # "🇺🇸"
 print(flag.flag_unicode)     # "U+1F1FA U+1F1F8"
 
 cur = data.currency
-print(cur.code, cur.symbol, cur.name)
-print(cur.name_plural)       # "US dollars"
-print(cur.hex_unicode)
+if cur:                      # None for some addresses, such as 1.1.1.1
+    print(cur.code, cur.symbol, cur.name)
+    print(cur.name_plural)   # "US dollars"
 
 conn = data.connection
 print(conn.asn_number)       # 15169
@@ -116,13 +118,16 @@ me = client.me()
 print(me.data.ip)  # the caller's public IP
 
 bulk = client.bulk(["8.8.8.8", "1.1.1.1"])
-for item in bulk.data.response_array or []:
-    print(item.data.ip, item.data.geo_location.country)
+for row in bulk.data.response_array or []:
+    if row.success:
+        print(row.data.ip, row.data.geo_location.country)
+    else:
+        print(row.data.ip, row.message)
 ```
 
 ### Example JSON (mapped fields)
 
-What `lookup("8.8.8.8")` looks like after the SDK maps the wire payload:
+What `lookup("8.8.8.8")` looks like with the SDK's field names. Shortened. Values such as the time change between requests.
 
 ```json
 {
@@ -135,8 +140,8 @@ What `lookup("8.8.8.8")` looks like after the SDK maps the wire payload:
       "country": "United States",
       "country_code": "US",
       "capital": "Washington",
-      "region": "California",
-      "region_code": "CA",
+      "region": null,
+      "region_code": null,
       "city": null,
       "postal_code": null,
       "dial_code": "+1",
@@ -147,11 +152,11 @@ What `lookup("8.8.8.8")` looks like after the SDK maps the wire payload:
     },
     "timezone": {
       "time_zone": "America/Chicago",
-      "abbr": "CDT",
-      "offset": -18000,
-      "is_dst": true,
-      "utc": "UTC-05:00",
-      "current_time": "2026-08-07T12:00:00-05:00"
+      "abbr": "CST",
+      "offset": -21600,
+      "is_dst": false,
+      "utc": "-06:00",
+      "current_time": "2026-11-26T08:10:50-06:00"
     },
     "flag": {
       "flag_icon": "🇺🇸",
@@ -161,47 +166,41 @@ What `lookup("8.8.8.8")` looks like after the SDK maps the wire payload:
       "code": "USD",
       "symbol": "$",
       "name": "US Dollar",
-      "name_plural": "US dollars",
-      "hex_unicode": "0024"
+      "name_plural": "US dollars"
     },
     "connection": {
       "asn_number": 15169,
       "asn_org": "Google LLC",
-      "isp": "Google LLC",
-      "org": "Google LLC",
-      "domain": "google.com",
+      "isp": "Google",
+      "org": "Google",
+      "domain": null,
       "connection_type": "Corporate"
     },
     "security": {
       "is_vpn": false,
       "is_tor": false,
       "is_threat": "low"
-    },
-    "user_agent": null
+    }
   }
 }
 ```
 
-City/region on anycast DNS IPs may be empty; country, ASN, timezone, flag, and currency are populated. Exact coordinates vary.
+Fields can be `None`. For example, `currency` and the country fields are `None` for `1.1.1.1`.
 
 ## Migrating from v1
 
 | v1 | v2 |
 |----|----|
-| `get_ip(ip)` / `get_location(ip)` | `lookup(ip)` then `resp.data.geo_location` |
-| `get_me()` / `get_location()` | `me()` |
-| `get_timezone(ip)` | `lookup(ip).data.timezone` |
-| `get_connection(ip)` | `lookup(ip).data.connection` |
-| `get_security(ip)` | `lookup(ip).data.security` |
-| *(missing)* | `bulk(ips)` |
-
-Client class is `IPWhoClient` (was `IPWho`). Calls are **synchronous**.
+| `from src import IPWho` | `from ipwho import IPWhoClient` |
+| `get_location(ip)` / `get_ip(ip)` | `lookup(ip)` then `resp.data.geo_location` |
+| `get_me()` | `me()` |
+| methods were `async` | methods are synchronous (no `await`) |
 
 ## API Reference
 
 ### `IPWhoClient(api_key, base_url=None, timeout=30.0)`
 
-- **api_key**: [IPWho](https://www.ipwho.org) API key (sent as query `apiKey`). Required.
+- **api_key**: [IPWho](https://www.ipwho.org) API key, sent as `Authorization: Bearer`. Required.
 - **base_url**: default `https://api.ipwho.org`.
 - **timeout**: seconds (default `30`).
 - **Raises**: `ValueError` if the key is empty.
@@ -216,7 +215,7 @@ Client class is `IPWhoClient` (was `IPWho`). Calls are **synchronous**.
 
 ### `bulk(ips) -> IpGeoResponse`
 
-`GET /bulk/{ip1,ip2,...}`. `ips` must be non-empty. Per-IP rows: `resp.data.response_array` (list of `IpGeoResponse`).
+`GET /bulk/{ip1,ip2,...}`. `ips` must be non-empty. Per-IP rows: `resp.data.response_array` (list of `IpGeoResponse`). Check each row's `success`. A failed row has a `message`, and its `data` holds only the `ip`.
 
 ### Errors
 
@@ -323,10 +322,15 @@ The live JSON mixes camelCase and snake_case (`postal_Code`, `flag_Icon`, `isVpn
 ## Testing
 
 ```bash
-IPWHO_API_KEY=your_key python3 test_ipwho.py
+pip install -r requirements-dev.txt
+python -m pytest
 ```
 
-The live check is `test_ipwho.py`.
+These tests need no API key: they run against a local stand-in server. For a live check, which uses lookups from your quota:
+
+```bash
+IPWHO_API_KEY=your_key python3 test_ipwho.py
+```
 
 ## Changelog
 
