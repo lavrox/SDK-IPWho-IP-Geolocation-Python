@@ -376,7 +376,7 @@ class IPWhoClient:
         base_url: Optional[str] = None,
         timeout: float = 30.0,
     ) -> None:
-        api_key = (api_key or "").strip()
+        api_key = api_key.strip() if isinstance(api_key, str) else ""
         if not api_key:
             raise ValueError("api_key is required")
         # The key is sent in a header. Reject it here, without repeating it,

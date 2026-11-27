@@ -194,6 +194,7 @@ Fields can be `None`. For example, `currency` and the country fields are `None` 
 | `from src import IPWho` | `from ipwho import IPWhoClient` |
 | `get_location(ip)` / `get_ip(ip)` | `lookup(ip)` then `resp.data.geo_location` |
 | `get_me()` | `me()` |
+| `get_timezone(ip)` / `get_connection(ip)` / `get_security(ip)` | `lookup(ip)`, then `resp.data.timezone` / `.connection` / `.security` |
 | methods were `async` | methods are synchronous (no `await`) |
 
 ## API Reference
@@ -313,7 +314,7 @@ The live JSON mixes camelCase and snake_case (`postal_Code`, `flag_Icon`, `isVpn
 ## Troubleshooting
 
 - **API key is required**: create a key at [ipwho.org](https://www.ipwho.org).
-- **HTTP 403**: blank User-Agent is rejected. This SDK sends `ipwho-python-sdk/2.0.0`.
+- HTTP 403: your key or plan doesn't allow the request, or it was blocked before reaching the API because of its `User-Agent`. The SDK sends `ipwho-python-sdk/2.0.0`.
 - **HTTP 401 / invalid key**: `APIResponseError`.
 - **HTTP 429**: `RateLimitError` — back off and retry.
 - **HTTP 404**: `InvalidIPError`.

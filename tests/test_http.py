@@ -162,3 +162,5 @@ def test_key_with_invalid_characters_is_rejected_without_repeating_it():
     assert "secret_part" not in str(caught.value)
     with pytest.raises(ValueError, match="api_key is required"):
         IPWhoClient("  \n")
+    with pytest.raises(ValueError, match="api_key is required"):
+        IPWhoClient(123)
