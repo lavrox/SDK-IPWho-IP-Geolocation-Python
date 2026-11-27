@@ -376,8 +376,13 @@ class IPWhoClient:
         base_url: Optional[str] = None,
         timeout: float = 30.0,
     ) -> None:
+        api_key = (api_key or "").strip()
         if not api_key:
             raise ValueError("api_key is required")
+        # The key is sent in a header. Reject it here, without repeating it,
+        # rather than let the HTTP library quote it in an error message.
+        if any(not " " <= char <= "~" for char in api_key):
+            raise ValueError("api_key contains characters that are not allowed")
         self._base_url = (base_url or self.DEFAULT_BASE_URL).rstrip("/")
         self._timeout = timeout
         self._session = requests.Session()

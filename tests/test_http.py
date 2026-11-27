@@ -148,3 +148,17 @@ def test_connection_failure_does_not_reveal_the_key():
         unreachable.lookup("8.8.8.8")
     assert KEY not in str(caught.value)
     assert KEY not in repr(caught.value.__cause__)
+
+
+def test_key_with_surrounding_whitespace_is_trimmed(stub, monkeypatch):
+    monkeypatch.setenv("NO_PROXY", "127.0.0.1")
+    IPWhoClient(f"  {KEY}\n", base_url=stub.url).lookup("8.8.8.8")
+    assert stub.requests[0][1]["Authorization"] == f"Bearer {KEY}"
+
+
+def test_key_with_invalid_characters_is_rejected_without_repeating_it():
+    with pytest.raises(ValueError) as caught:
+        IPWhoClient("sk.secret_part\nmore")
+    assert "secret_part" not in str(caught.value)
+    with pytest.raises(ValueError, match="api_key is required"):
+        IPWhoClient("  \n")
